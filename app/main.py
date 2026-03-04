@@ -1,4 +1,4 @@
-from app.llm_client import chat
+from llm_client import chat
 
 def main():
     print("Social Context Translator")
