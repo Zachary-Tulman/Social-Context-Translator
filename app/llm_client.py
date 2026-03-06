@@ -12,7 +12,7 @@ embed = HuggingFaceEmbeddings()
 db = Chroma(persist_directory="vectorstore/", embedding_function=embed).as_retriever()
 
 def __get_system_prompt(message: str) -> str:
-    system_prompt = str(os.getenv("SYSTEM_PROMPT"))
+    system_prompt = os.getenv("SYSTEM_PROMPT", default="")
     chunks = db.invoke(message)
     for chunk in chunks:
         system_prompt += "\n"
@@ -22,15 +22,14 @@ def __get_system_prompt(message: str) -> str:
 
 def chat(message: str, conversation_history: list) -> str:
     conversation_history.append(HumanMessage(content=message))
-
+    # RAG
     system_prompt = __get_system_prompt(message)
-
     messages = [SystemMessage(system_prompt)] + conversation_history
 
     response = llm.invoke(messages)
-
     conversation_history.append(AIMessage(content=response.content))
 
     if not isinstance(response.content, str):
+        # TODO: when does this happen? what consequences does returning an empty string ignore?
         return ""
     return response.content
