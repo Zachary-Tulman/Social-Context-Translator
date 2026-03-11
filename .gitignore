@@ -4,6 +4,7 @@ __pycache__/
 venv/
 vectorstore/
 .env
+data/
 
 
 python.exe.stackdump

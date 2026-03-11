@@ -13,12 +13,13 @@ import { Loader2 } from "lucide-react";
     - header font
     - borders nicer
     - make outer edges not as obvious
-    - send assistant script as first message
+    - send assistant script as "first" message from assistant
     - input field grows vertically on line break
     - loading icon center + 1.5x size
     - fade-in animation when new message bubble appears
     - separate bubble appearance between human and AI (put human before fetch AI response)
     - subtle blip sound on new message appear
+    - replace .gitkeep in data/ with .txt file or README explaining how to put data
 */
 interface Message {
   role: string;
