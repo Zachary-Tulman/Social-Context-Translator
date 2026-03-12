@@ -3,23 +3,24 @@ import { useRef } from "react";
 import { useEffect } from "react";
 import "./App.css";
 import { ScrollArea } from "./components/ui/scroll-area";
-import { Input } from "./components/ui/input";
+import { Textarea } from "./components/ui/textarea";
 import { Button } from "./components/ui/button";
 import { Loader2 } from "lucide-react";
 
 /* TODO:
     - finalize colors
-    - bubble outlines
-    - header font
-    - borders nicer
-    - make outer edges not as obvious
-    - send assistant script as "first" message from assistant
-    - input field grows vertically on line break
+    x bubble outlines
+    - header font (or (re)move header)
+    x borders nicer
+    x make outer edges not as obvious
+    x send assistant script as "first" message from assistant
+    x input field grows vertically on line break
     - loading icon center + 1.5x size
-    - fade-in animation when new message bubble appears
-    - separate bubble appearance between human and AI (put human before fetch AI response)
+    x fade-in animation when new message bubble appears
+    x separate bubble appearance between human and AI (put human before fetch AI response)
     - subtle blip sound on new message appear
     - replace .gitkeep in data/ with .txt file or README explaining how to put data
+    - make main readme presentable
 */
 interface Message {
   role: string;
@@ -27,20 +28,47 @@ interface Message {
 }
 
 function App() {
-  const [chat_history, setChatHistory] = useState<Message[]>([]);
+  const greeting_message: Message = {
+    role: "ai",
+    content:
+      "Hello. I am the Social Context Translator, an app created to help users \
+    understand the social context behind all sorts of social situations in a \
+    low-pressure environment. To get started, please explain a social \
+    situation you would like to understand better, and I will do my best \
+    to explain it to you!\n\nIf you have additional context and social \
+    cues/ actions you may have noticed others do during the interaction,\
+    let me know and that will help me get a better grasp of the situation.",
+  };
+  const [chat_history, setChatHistory] = useState<Message[]>([
+    greeting_message,
+  ]);
   const [chat_input, setChatInput] = useState("");
   const [is_loading, setIsLoading] = useState(false);
-  const bottom_ref = useRef<HTMLDivElement>(null);
+  const chat_window_bottom_ref = useRef<HTMLDivElement>(null);
+  const text_area_ref = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    bottom_ref.current?.scrollIntoView();
+    chat_window_bottom_ref.current?.scrollIntoView();
   }, [chat_history]);
+
+  useEffect(() => {
+    if (text_area_ref.current) {
+      text_area_ref.current.style.height = "0px";
+      text_area_ref.current.style.height = `${Math.max(
+        text_area_ref.current.scrollHeight + 1,
+        37
+      )}px`;
+    }
+  }, [chat_input]);
 
   async function sendMessage() {
     const message = {
       role: "human",
       content: chat_input,
     };
+
+    setChatInput("");
+    setChatHistory((prev) => [...prev, message]);
 
     setIsLoading(true);
 
@@ -54,23 +82,21 @@ function App() {
     });
     const data = await response.json();
 
-    setChatHistory([
-      ...chat_history,
-      message,
+    setChatHistory((prev) => [
+      ...prev,
       {
         role: "ai",
         content: data.response,
       },
     ]);
 
-    setChatInput("");
     setIsLoading(false);
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col p-4 bg-stone-200">
-      <div className="w-full max-w-2xl min-w-2xl mx-auto h-full flex flex-1 flex-col rounded-xl shadow-lg bg-violet-100">
-        <div className="px-6 py-4 border-b font-semibold text-2xl text-center bg-violet-300">
+    <div className="w-screen h-screen overflow-hidden flex flex-col p-4 bg-stone-200">
+      <div className="min-w-sm max-w-3xl w-3xl h-full mx-auto justify-center flex flex-1 flex-col rounded-xl">
+        <div className="px-6 py-4 w-full border-b mx-auto font-semibold text-2xl text-center">
           Social Context Translator
         </div>
         <ScrollArea className="flex-1 overflow-hidden">
@@ -79,8 +105,8 @@ function App() {
               <div
                 className={`${
                   message.role === "human"
-                    ? "bg-blue-300 self-end rounded-2xl shadow-md px-4 py-2 max-w-[70%]"
-                    : "bg-blue-200 self-start rounded-2xl shadow-md px-4 py-2 max-w-[70%]"
+                    ? "bg-blue-300 animate-fade-in-bubble self-end rounded-2xl shadow-md px-4 py-2 max-w-[70%]"
+                    : "bg-blue-200 animate-fade-in-bubble whitespace-pre-wrap self-start rounded-2xl shadow-md px-4 py-2 max-w-[70%]"
                 }`}
                 key={index}
               >
@@ -88,19 +114,29 @@ function App() {
               </div>
             ))}
             {is_loading && <Loader2 className="animate-spin" />}
-            <div ref={bottom_ref} />
+            <div ref={chat_window_bottom_ref} />
           </div>
         </ScrollArea>
-        <div className="flex gap-2 p-4 border-t bg-violet-300">
-          <Input
-            className="shadow-md bg-violet-100"
+        <div className="w-full items-end flex mx-auto gap-2 p-4 border-t rounded-xl bg-[#CFBAF0]">
+          <Textarea
+            style={{
+              minHeight: "0px",
+              maxHeight: "25rem",
+              height: "37px",
+              boxSizing: "border-box",
+            }}
+            ref={text_area_ref}
+            className="shadow-md pv-5 resize-none"
             value={chat_input}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
+              if (e.key === "Enter" && e.shiftKey === false && !is_loading) {
+                e.preventDefault();
+                sendMessage();
+              }
             }}
           />
-          <Button onClick={sendMessage}>Send</Button>
+          <Button className="" onClick={sendMessage}></Button>
         </div>
       </div>
     </div>
