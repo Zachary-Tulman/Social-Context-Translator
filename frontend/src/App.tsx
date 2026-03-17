@@ -10,15 +10,15 @@ import { Loader2 } from "lucide-react";
 /* TODO:
     - finalize colors
     x bubble outlines
-    - header font (or (re)move header)
+    x make header faded edge so chat scrolls up nicely
     x borders nicer
     x make outer edges not as obvious
     x send assistant script as "first" message from assistant
     x input field grows vertically on line break
-    - loading icon center + 1.5x size
+    x loading icon 1.5x size
     x fade-in animation when new message bubble appears
     x separate bubble appearance between human and AI (put human before fetch AI response)
-    - subtle blip sound on new message appear
+    x subtle blip sound on new message appear
     - replace .gitkeep in data/ with .txt file or README explaining how to put data
     - make main readme presentable
 */
@@ -27,23 +27,25 @@ interface Message {
   content: string;
 }
 
+const greeting_message: Message = {
+  role: "ai",
+  content:
+    "Hello. I am the Social Context Translator, an app created to help users " +
+    "understand the social context behind all sorts of social situations in a " +
+    "low-pressure environment. To get started, please explain a social " +
+    "situation you would like to understand better, and I will do my best " +
+    "to explain it to you!\n\nIf you have additional context and social " +
+    "cues/actions you may have noticed others do during the interaction, " +
+    "let me know and that will help me get a better grasp of the situation.",
+};
+
 function App() {
-  const greeting_message: Message = {
-    role: "ai",
-    content:
-      "Hello. I am the Social Context Translator, an app created to help users \
-    understand the social context behind all sorts of social situations in a \
-    low-pressure environment. To get started, please explain a social \
-    situation you would like to understand better, and I will do my best \
-    to explain it to you!\n\nIf you have additional context and social \
-    cues/ actions you may have noticed others do during the interaction,\
-    let me know and that will help me get a better grasp of the situation.",
-  };
   const [chat_history, setChatHistory] = useState<Message[]>([
     greeting_message,
   ]);
   const [chat_input, setChatInput] = useState("");
   const [is_loading, setIsLoading] = useState(false);
+  const [is_error, setIsError] = useState(false);
   const chat_window_bottom_ref = useRef<HTMLDivElement>(null);
   const text_area_ref = useRef<HTMLTextAreaElement>(null);
 
@@ -62,6 +64,8 @@ function App() {
   }, [chat_input]);
 
   async function sendMessage() {
+    const signal = AbortSignal.timeout(15000);
+    const blip_sound = new Audio("/little-pop.wav");
     const message = {
       role: "human",
       content: chat_input,
@@ -69,38 +73,49 @@ function App() {
 
     setChatInput("");
     setChatHistory((prev) => [...prev, message]);
+    blip_sound.play();
 
+    setIsError(false);
     setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        signal: signal,
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: chat_input,
+          conversation_history: chat_history,
+        }),
+      });
+      const data = await response.json();
 
-    const response = await fetch("http://localhost:8000/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: chat_input,
-        conversation_history: chat_history,
-      }),
-    });
-    const data = await response.json();
-
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        role: "ai",
-        content: data.response,
-      },
-    ]);
-
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: "ai",
+          content: data.response,
+        },
+      ]);
+    } catch (err) {
+      setIsError(true);
+      console.error(`WARNING: Error detected: ${err}`);
+    }
+    blip_sound.play();
     setIsLoading(false);
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex flex-col p-4 bg-stone-200">
+    <div className="w-screen h-screen overflow-hidden flex flex-col bg-stone-200">
+      <header
+        className="flex w-full sticky top-0 z-10 h-12 -mb-3"
+        style={{ height: "48px" }}
+      >
+        <div className="from-stone-200 via-stone-200 via-65% to-stone-200/0 pointer-events-none absolute inset-0 -bottom-5 z-[-1] bg-gradient-to-b blur-sm"></div>
+        <div className="px-6 py-4 w-full mx-auto font-semibold text-2xl text-center"></div>
+      </header>
       <div className="min-w-sm max-w-3xl w-3xl h-full mx-auto justify-center flex flex-1 flex-col rounded-xl">
-        <div className="px-6 py-4 w-full border-b mx-auto font-semibold text-2xl text-center">
-          Social Context Translator
-        </div>
         <ScrollArea className="flex-1 overflow-hidden">
-          <div className="flex flex-col gap-2 p-4">
+          <div className="flex flex-col gap-2 pt-6 p-4">
             {chat_history.map((message, index) => (
               <div
                 className={`${
@@ -113,11 +128,12 @@ function App() {
                 {message.content}
               </div>
             ))}
-            {is_loading && <Loader2 className="animate-spin" />}
+            {is_loading && <Loader2 className="animate-spin" size={36} />}
+            {is_error && `An error occurred. Please try again later.`}
             <div ref={chat_window_bottom_ref} />
           </div>
         </ScrollArea>
-        <div className="w-full items-end flex mx-auto gap-2 p-4 border-t rounded-xl bg-[#CFBAF0]">
+        <div className="w-full items-end flex mx-auto gap-2 mb-4 p-4 border-t rounded-xl bg-[#CFBAF0] shadow-sm">
           <Textarea
             style={{
               minHeight: "0px",
