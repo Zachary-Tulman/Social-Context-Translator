@@ -5,21 +5,10 @@ import "./App.css";
 import { ScrollArea } from "./components/ui/scroll-area";
 import { Textarea } from "./components/ui/textarea";
 import { Button } from "./components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 
 /* TODO:
-    - finalize colors
-    x bubble outlines
-    x make header faded edge so chat scrolls up nicely
-    x borders nicer
-    x make outer edges not as obvious
-    x send assistant script as "first" message from assistant
-    x input field grows vertically on line break
-    x loading icon 1.5x size
-    x fade-in animation when new message bubble appears
-    x separate bubble appearance between human and AI (put human before fetch AI response)
-    x subtle blip sound on new message appear
-    - replace .gitkeep in data/ with .txt file or README explaining how to put data
+    - refactor code
     - make main readme presentable
 */
 interface Message {
@@ -38,6 +27,7 @@ const greeting_message: Message = {
     "cues/actions you may have noticed others do during the interaction, " +
     "let me know and that will help me get a better grasp of the situation.",
 };
+const blip_sound = new Audio("/little-pop.wav");
 
 function App() {
   const [chat_history, setChatHistory] = useState<Message[]>([
@@ -65,7 +55,6 @@ function App() {
 
   async function sendMessage() {
     const signal = AbortSignal.timeout(15000);
-    const blip_sound = new Audio("/little-pop.wav");
     const message = {
       role: "human",
       content: chat_input,
@@ -105,23 +94,26 @@ function App() {
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex flex-col bg-stone-200">
+    <div className="w-screen h-screen overflow-hidden flex flex-col bg-[#EDF2FB]">
+      <div className="fixed inset-0 w-full h-full z-[0]">
+        <img src="/blobs.svg" className="w-full h-full"></img>
+      </div>
       <header
-        className="flex w-full sticky top-0 z-10 h-12 -mb-3"
+        className="flex w-full sticky top-0 z-10 h-12 -mb-3 bg-[#EDF2FB]"
         style={{ height: "48px" }}
       >
-        <div className="from-stone-200 via-stone-200 via-65% to-stone-200/0 pointer-events-none absolute inset-0 -bottom-5 z-[-1] bg-gradient-to-b blur-sm"></div>
+        <div className="from-[#EDF2FB] via-[#EDF2FB] via-65% to-[#EDF2FB]/0 pointer-events-none absolute inset-0 -bottom-5 z-[-1] bg-gradient-to-b blur-sm"></div>
         <div className="px-6 py-4 w-full mx-auto font-semibold text-2xl text-center"></div>
       </header>
-      <div className="min-w-sm max-w-3xl w-3xl h-full mx-auto justify-center flex flex-1 flex-col rounded-xl">
-        <ScrollArea className="flex-1 overflow-hidden">
-          <div className="flex flex-col gap-2 pt-6 p-4">
+      <div className="min-w-sm max-w-3xl w-3xl h-full mx-auto z-[1] justify-center flex flex-1 flex-col rounded-xl">
+        <ScrollArea className="flex-1 overflow-hidden" scrollHideDelay={0}>
+          <div className="flex flex-col gap-2 pt-8 p-4">
             {chat_history.map((message, index) => (
               <div
                 className={`${
                   message.role === "human"
-                    ? "bg-blue-300 animate-fade-in-bubble self-end rounded-2xl shadow-md px-4 py-2 max-w-[70%]"
-                    : "bg-blue-200 animate-fade-in-bubble whitespace-pre-wrap self-start rounded-2xl shadow-md px-4 py-2 max-w-[70%]"
+                    ? "bg-[#B6CCFE] animate-fade-in-bubble whitespace-pre-wrap self-end rounded-2xl shadow-md px-4 py-2 my-1 max-w-[70%]"
+                    : "bg-[#D7E3FC] animate-fade-in-bubble whitespace-pre-wrap self-start rounded-2xl shadow-md px-4 py-2 my-1 max-w-[70%]"
                 }`}
                 key={index}
               >
@@ -133,7 +125,7 @@ function App() {
             <div ref={chat_window_bottom_ref} />
           </div>
         </ScrollArea>
-        <div className="w-full items-end flex mx-auto gap-2 mb-4 p-4 border-t rounded-xl bg-[#CFBAF0] shadow-sm">
+        <div className="w-full items-end flex mx-auto gap-2 mb-4 p-4 border-t rounded-xl bg-[#ABC4FF] shadow-sm">
           <Textarea
             style={{
               minHeight: "0px",
@@ -142,7 +134,7 @@ function App() {
               boxSizing: "border-box",
             }}
             ref={text_area_ref}
-            className="shadow-md pv-5 resize-none"
+            className="bg-[#CCDBFD] shadow-md pv-5 resize-none"
             value={chat_input}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => {
@@ -152,7 +144,9 @@ function App() {
               }
             }}
           />
-          <Button className="" onClick={sendMessage}></Button>
+          <Button className="" onClick={sendMessage}>
+            <Send style={{ marginLeft: "-20px", marginRight: "-20px" }} />
+          </Button>
         </div>
       </div>
     </div>
