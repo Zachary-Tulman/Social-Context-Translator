@@ -54,7 +54,7 @@ function App() {
   }, [chat_input]);
 
   async function sendMessage() {
-    const signal = AbortSignal.timeout(15000);
+    const signal = AbortSignal.timeout(30000);
     const message = {
       role: "human",
       content: chat_input,
@@ -93,6 +93,18 @@ function App() {
     setIsLoading(false);
   }
 
+  async function exportHistory() {
+    const history_blob = new Blob([JSON.stringify(chat_history)], {
+      type: "application/json",
+    });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(history_blob);
+    a.download = "chat_history.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   return (
     <div className="w-screen h-screen overflow-hidden flex flex-col bg-[#EDF2FB]">
       <div className="fixed inset-0 w-full h-full z-[0]">
@@ -104,6 +116,11 @@ function App() {
       >
         <div className="from-[#EDF2FB] via-[#EDF2FB] via-65% to-[#EDF2FB]/0 pointer-events-none absolute inset-0 -bottom-5 z-[-1] bg-gradient-to-b blur-sm"></div>
         <div className="px-6 py-4 w-full mx-auto font-semibold text-2xl text-center"></div>
+        <div className="p-4 z-[1]">
+          <Button className="" onClick={exportHistory}>
+            Export Chat History
+          </Button>
+        </div>
       </header>
       <div className="min-w-sm max-w-3xl w-3xl h-full mx-auto z-[1] justify-center flex flex-1 flex-col rounded-xl">
         <ScrollArea className="flex-1 overflow-hidden" scrollHideDelay={0}>
