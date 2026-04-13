@@ -38,6 +38,7 @@ function App() {
   const [is_error, setIsError] = useState(false);
   const chat_window_bottom_ref = useRef<HTMLDivElement>(null);
   const text_area_ref = useRef<HTMLTextAreaElement>(null);
+  const import_chat_ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     chat_window_bottom_ref.current?.scrollIntoView();
@@ -105,6 +106,23 @@ function App() {
     URL.revokeObjectURL(a.href);
   }
 
+  async function importHistory() {
+    import_chat_ref.current?.click();
+  }
+
+  async function readHistoryFile(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files) return;
+    const h_file = e.target.files[0];
+    const reader = new FileReader();
+    reader.readAsText(h_file);
+    reader.onload = () => {
+      const imported_history = JSON.parse(reader.result as string);
+      setChatHistory(imported_history);
+    };
+    // TODO: create a toast for import successful/unsuccessful
+    // TODO: do some sort of proper input check
+  }
+
   return (
     <div className="w-screen h-screen overflow-hidden flex flex-col bg-[#EDF2FB]">
       <div className="fixed inset-0 w-full h-full z-[0]">
@@ -120,6 +138,16 @@ function App() {
           <Button className="" onClick={exportHistory}>
             Export Chat History
           </Button>
+          <Button className="" onClick={importHistory}>
+            Import Chat History
+          </Button>
+          <input
+            ref={import_chat_ref}
+            className="hidden"
+            type="file"
+            accept=".json"
+            onChange={readHistoryFile}
+          ></input>
         </div>
       </header>
       <div className="min-w-sm max-w-3xl w-3xl h-full mx-auto z-[1] justify-center flex flex-1 flex-col rounded-xl">
