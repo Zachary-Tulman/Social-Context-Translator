@@ -5,7 +5,8 @@ venv/
 vectorstore/
 .env
 data/
-
+chatlogs/
+startdev.bat
 
 python.exe.stackdump
 .Python
