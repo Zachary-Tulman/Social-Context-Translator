@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
+    # Add the domain you're hosting the app on to the list below
     allow_origins=["http://localhost:5173", "http://localhost:4173"],
     allow_methods=["*"],
     allow_headers=["*"]
