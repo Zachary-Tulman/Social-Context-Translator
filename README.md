@@ -8,7 +8,7 @@ SCT uses LangChain with a RAG pipeline to provide responses tailored to each use
 2) The user's message is used to retrieve relevant chunks from a ChromaDB vector database containing individual social situation explanations.
 3) The retrieved chunks are reranked via cross-encoder for improved chunk relevance.
 4) The top 5 chunks are taken and added to the system prompt.
-5) The user's message is sent along with the RAG system prompt, and a response is received.
+5) SCT sends the user's message along with the RAG system prompt to an LLM API, and a response is received.
 
 ## Features
 - Clean and modern UI with responsive features
